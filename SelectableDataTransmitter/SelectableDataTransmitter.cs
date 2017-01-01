@@ -30,20 +30,9 @@ namespace SelectableDataTransmitter
         [KSPField]
         public float reconfigTime = 60.0f;
 
-#if false
-        [KSPEvent(active = true, guiActive = true, guiActiveEditor = true, guiName = "AntennaType", guiActiveUnfocused = true, unfocusedRange = 4f, externalToEVAOnly = true)]
-        public virtual void ChangeAntennatype()
-        { 
-            if (this.antennaType == AntennaType.DIRECT)
-                SetValues(AntennaType.RELAY);
-            else
-                SetValues(AntennaType.DIRECT);
-            setEvents();
-        }
-
-       
-#endif
-
+        [KSPAction("Set DIRECT")]
+        public void setDirectAction(KSPActionParam param)
+        { setDirect(); }
         [KSPEvent(active = true, guiActive = true, guiActiveEditor = true, guiName = "Set DIRECT", guiActiveUnfocused = true, unfocusedRange = 4f, externalToEVAOnly = true)]
         public virtual void setDirect()
         {
@@ -51,12 +40,20 @@ namespace SelectableDataTransmitter
                 SetValues(AntennaType.DIRECT);
         }
 
+        [KSPAction(guiName = "Set RELAY")] //, requireFullControl = false, isPersistent = true, advancedTweakable = false)]
+        public void setRelayAction(KSPActionParam param)
+        { setRelay(); }
         [KSPEvent(active = true, guiActive = true, guiActiveEditor = true, guiName = "Set RELAY", guiActiveUnfocused = true, unfocusedRange = 4f, externalToEVAOnly = true)]
         public virtual void setRelay()
         {
             if (!reconfigInProgress)
                 SetValues(AntennaType.RELAY);
         }
+
+        [KSPField(isPersistant = true)]
+        bool antennaTypeConfigured = false;
+        [KSPField(isPersistant = true)]
+        AntennaType configuredAntennaType = AntennaType.INTERNAL;
 
         public List<DataTransmitterData> transData;
 
@@ -66,6 +63,7 @@ namespace SelectableDataTransmitter
 
         void setEvents()
         {
+            Debug.Log("setEvents");
             //this.Events["ChangeAntennatype"].guiName = this.antennaType.ToString();
             if (reconfigInProgress)
             {
@@ -78,13 +76,23 @@ namespace SelectableDataTransmitter
                 this.Events["setDirect"].guiName = "Set DIRECT";
                 this.Events["setRelay"].guiActive = true;
                 this.Events["setDirect"].guiActive = true;
-                if (HighLogic.LoadedSceneIsEditor)
-                    return;
-                if (this.antennaType == AntennaType.DIRECT)
+                //if (HighLogic.LoadedSceneIsEditor)
+                //    return;
+                if (this.antennaType == AntennaType.RELAY)
+                {
                     this.Events["setRelay"].guiActive = false;
+                    this.Events["setRelay"].guiActiveEditor = false;
+                    this.Events["setDirect"].guiActiveEditor = true;
+                }
                 else
-                    this.Events["setDirect"].guiActive = false;                   
+                {
+                    this.Events["setDirect"].guiActive = false;
+                    this.Events["setDirect"].guiActiveEditor = false;
+                    this.Events["setRelay"].guiActiveEditor = true;
+
+                }
             }
+            this.powerText = KSPUtil.PrintSI(this.antennaPower, string.Empty, 3, false) + ((!this.antennaCombinable) ? string.Empty : " (Combinable)");
         }
 
 
@@ -156,15 +164,17 @@ namespace SelectableDataTransmitter
         {
             Debug.Log("OnStart");
             ConfigNode node = null;
-           
+
             if (this.transData == null)
+            {
                 this.transData = new List<DataTransmitterData>();
+            }
             if (part != null && part.partInfo != null)
             {
-                ConfigNode EntirePartCFG = GameDatabase.Instance.GetConfigNode(part.partInfo.partUrl);
-                if (EntirePartCFG != null)
+                ConfigNode entirePartCFG = GameDatabase.Instance.GetConfigNode(part.partInfo.partUrl);
+                if (entirePartCFG != null)
                 {
-                    ConfigNode[] partNodes = EntirePartCFG.GetNodes();
+                    ConfigNode[] partNodes = entirePartCFG.GetNodes();
                     foreach (var n1 in partNodes)
                     {
                         if (n1.GetValue("name") == modName)
@@ -173,7 +183,7 @@ namespace SelectableDataTransmitter
                             break;
                         }
                     }
-                     
+
                     if (node != null)
                     {
                         if (node.HasNode("ANTENNATYPE"))
@@ -192,9 +202,13 @@ namespace SelectableDataTransmitter
                         }
                     }
                 }
+                Debug.Log("antennaTypeConfigured: " + antennaTypeConfigured.ToString() + "   configuredAntennaType: " + configuredAntennaType.ToString());
+                if (antennaTypeConfigured)
+                    SetValues(configuredAntennaType, true);
+                else
+                    SetValues(defaultAntennaType, true);
             }
-            SetValues(defaultAntennaType);
-           //  setEvents();
+            //  setEvents();
         }
 
         public override void OnStart(PartModule.StartState state)
@@ -218,31 +232,41 @@ namespace SelectableDataTransmitter
 
         double newAntennaPower;
 
-        void SetValues(AntennaType type)
+        void SetValues(AntennaType type, bool init = false)
         {
             Debug.Log("SetValues for " + type.ToString());
             foreach (var data in transData)
             {
                 if (data.antennaType == type)
                 {
+                    antennaTypeConfigured = true;
+                    configuredAntennaType = type;
+
                     this.antennaType = type;
                     this.packetInterval = data.packetInterval;
                     this.packetSize = data.packetSize;
                     this.packetResourceCost = data.packetResourceCost;
-                    this.antennaPower = 0;
+                    this.antennaPower = data.antennaPower;
                     newAntennaPower = data.antennaPower;
                     this.antennaCombinable = data.antennaCombinable;
                     this.antennaCombinableExponent = data.antennaCombinableExponent;
                     this.powerText = KSPUtil.PrintSI(this.antennaPower, string.Empty, 3, false) + ((!this.antennaCombinable) ? string.Empty : " (Combinable)");
 
                     // setEvents();
-                    if (HighLogic.LoadedSceneHasPlanetarium &&  !HighLogic.LoadedSceneIsEditor)
+                    if (!init && HighLogic.LoadedSceneHasPlanetarium &&  !HighLogic.LoadedSceneIsEditor)
                     {
+                        this.antennaPower = 0;
                         reconfigInProgress = true;
                         reconfigStartTime = Planetarium.GetUniversalTime();
                         setEvents();
                     }
-                    Debug.Log("Setting antennaPower: " + this.antennaPower.ToString());
+                    else
+                    {
+                        
+                        if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneHasPlanetarium)
+                            setEvents();
+                    }
+                   
                     return;
                 }
             }
@@ -287,7 +311,7 @@ namespace SelectableDataTransmitter
             string s = "";
             foreach (var data in transData)
             {
-                s += GetInfo2(data) + "--------------\n";
+                s += GetInfo2(data) + "-----------------\n";
             }
             if (s == "")
                 s = base.GetInfo();
