@@ -329,6 +329,8 @@ namespace SelectableDataTransmitter
                 {
                     reconfigInProgress = false;
                     this.antennaPower = newAntennaPower;
+                    if (HighLogic.CurrentGame.Parameters.Difficulty.EnableCommNet)
+                        CommNetNetwork.Instance.CommNet.Rebuild();
                 }
                 setEvents();
             }

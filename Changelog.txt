@@ -4,3 +4,6 @@
 0.1.1
 		Fixed delay upon launch
 		Added support for ModActions mod
+
+0.1.2
+		Added call to properly rebuild Commnet after change of transmitter
