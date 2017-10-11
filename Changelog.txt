@@ -7,3 +7,5 @@
 
 0.1.2
 		Added call to properly rebuild Commnet after change of transmitter
+0.1.3
+		Updated for KSP 1.3.1

@@ -1,5 +1,5 @@
 ﻿
-set H=R:\KSP_1.3.0_dev
+set H=R:\KSP_1.3.1_dev
 echo %H%
 
 set d=%H%
@@ -15,4 +15,4 @@ mkdir %d%
 copy /y bin\Debug\SelectableDataTransmitter.dll ..\GameData\SelectableDataTransmitter\Plugins
 copy  /y SelectableDataTransmitter.version ..\GameData\SelectableDataTransmitter\SelectableDataTransmitter.version
 
-xcopy /Y /E ..\GameData\SelectableDataTransmitter %H%\GameData\SelectableDataTransmitter
+xcopy /Y /E /I ..\GameData\SelectableDataTransmitter %H%\GameData\SelectableDataTransmitter
