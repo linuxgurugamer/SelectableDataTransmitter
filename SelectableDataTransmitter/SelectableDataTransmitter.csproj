@@ -36,6 +36,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AssemblyVersion.tt</DependentUpon>
     </Compile>
+    <Compile Include="Log.cs" />
     <Compile Include="SelectableDataTransmitter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -71,10 +72,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>start  /D D:\Users\jbb\github\SelectableDataTransmitter\SelectableDataTransmitter  /WAIT deploy.bat
+    <PostBuildEvent>start  /D D:\Users\jbb\github\SelectableDataTransmitter\ /WAIT deploy.bat  $(TargetDir) $(TargetFileName)
 
 if $(ConfigurationName) == Release (
-start /D  D:\Users\jbb\github\SelectableDataTransmitter\SelectableDataTransmitter  /WAIT buildRelease.bat
+start /D  D:\Users\jbb\github\SelectableDataTransmitter\ /WAIT buildRelease.bat  $(TargetDir) $(TargetFileName)
 )
 </PostBuildEvent>
   </PropertyGroup>
