@@ -33,7 +33,7 @@ set RELEASEDIR=d:\Users\jbb\release
 set ZIP="c:\Program Files\7-zip\7z.exe"
 
 rem Copy files to GameData locations
-echo on
+
 copy /Y "%1%2" "%GAMEDATA%\%GAMEDIR%\Plugins"
 copy /Y %VERSIONFILE% %GAMEDATA%\%GAMEDIR%
 copy /Y ..\MiniAVC.dll %GAMEDATA%\%GAMEDIR%

@@ -14,3 +14,6 @@
 		Added  jenkins build
 		Replaced deploy and buildrelease scripts
 		Minor changes re. non-connectivity issues
+
+0.1.4.2
+	Updated for 1.4.1
